@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+
+<title>Dashboard</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+
+<body>
+
+<div class="layout">
+
+<aside class="sidebar">
+
+<h2>Tienda de Zapatos mio</h2>
+
+<ul>
+
+<li><a href="/">🏠 Inicio</a></li>
+<li><a href="/dashboard">Dashboard</a></li>
+<li><a href="/ia">IA Comercial</a></li>
+<li><a href="/tendencias">Tendencias</a></li>
+<li><a href="/ventas">Ventas</a></li>
+<li><a href="/inventario">Inventario</a></li>
+<li><a href="/alertas">Alertas</a></li>
+
+</ul>
+
+</aside>
+
+<main class="main">
+
+<h1>Dashboard General</h1>
+
+<div class="cards-dashboard">
+
+<div class="card-dashboard">
+
+<h3>Total Ventas</h3>
+
+<p>{{ total_ventas }}</p>
+
+</div>
+
+<div class="card-dashboard">
+
+<h3>Total Zapatos</h3>
+
+<p>{{ total_zapatos }}</p>
+
+</div>
+
+<div class="card-dashboard">
+
+<h3>Total Inventario</h3>
+
+<p>{{ total_inventario }}</p>
+
+</div>
+
+<div class="card-dashboard">
+
+<h3>Alertas Inteligentes</h3>
+
+<p>{{ total_alertas }}</p>
+
+</div>
+
+</div>
+
+<div class="resultado">
+
+<h3>Estado del sistema</h3>
+
+<p>
+El sistema semántico se encuentra conectado correctamente
+a Fuseki y procesando información RDF/OWL en tiempo real.
+</p>
+
+<div class="ia-box">
+
+ Motor de inferencia inteligente activo.
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+</body>
+</html>

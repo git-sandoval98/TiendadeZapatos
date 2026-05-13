@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+
+<title>IA Comercial</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/styles.css') }}">
+
+</head>
+
+<body>
+
+<div class="layout">
+
+<aside class="sidebar">
+
+<h2>Tienda de Zapatos mio</h2>
+
+<ul>
+
+<li><a href="/">🏠 Inicio</a></li>
+<li><a href="/dashboard">Dashboard</a></li>
+<li><a href="/ia">IA Comercial</a></li>
+<li><a href="/tendencias">Tendencias</a></li>
+<li><a href="/ventas">Ventas</a></li>
+<li><a href="/inventario">Inventario</a></li>
+<li><a href="/alertas">Alertas</a></li>
+
+</ul>
+
+</aside>
+
+<main class="main">
+
+<h1>Módulo de Inteligencia Artificial</h1>
+
+<div class="resultado">
+
+<h3>Inferencias comerciales inteligentes</h3>
+
+<table class="tabla">
+
+<thead>
+
+<tr>
+
+<th>#</th>
+<th>Categoría</th>
+<th>Género</th>
+<th>Ventas</th>
+<th>Prioridad</th>
+<th>Impacto</th>
+<th>Recomendación IA</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for item in analisis %}
+
+<tr>
+
+<td>{{ loop.index }}</td>
+
+<td>{{ item.categoria }}</td>
+
+<td>{{ item.genero }}</td>
+
+<td>{{ item.ventas }}</td>
+
+<td>{{ item.prioridad }}</td>
+
+<td>{{ item.impacto }}</td>
+
+<td>{{ item.recomendacion }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+</div>
+
+</main>
+
+</div>
+
+</body>
+</html>

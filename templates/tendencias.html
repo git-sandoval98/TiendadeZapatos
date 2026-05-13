@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+
+<meta charset="UTF-8">
+
+<title>Tendencias</title>
+
+<link rel="stylesheet"
+href="{{ url_for('static', filename='css/styles.css') }}">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+</head>
+
+<body>
+
+<div class="layout">
+
+<aside class="sidebar">
+
+<h2>Tienda de Zapatos mio</h2>
+
+<ul>
+
+<li><a href="/">🏠 Inicio</a></li>
+<li><a href="/dashboard">Dashboard</a></li>
+<li><a href="/ia">IA Comercial</a></li>
+<li><a href="/tendencias">Tendencias</a></li>
+<li><a href="/ventas">Ventas</a></li>
+<li><a href="/inventario">Inventario</a></li>
+<li><a href="/alertas">Alertas</a></li>
+
+</ul>
+
+</aside>
+
+<main class="main">
+
+<h1>Tendencias Comerciales</h1>
+
+<div class="resultado">
+
+<h3>Ventas por temporada</h3>
+
+<table class="tabla">
+
+<thead>
+
+<tr>
+
+<th>#</th>
+<th>Temporada</th>
+<th>Total Ventas</th>
+
+</tr>
+
+</thead>
+
+<tbody>
+
+{% for item in tendencias %}
+
+<tr>
+
+<td>{{ loop.index }}</td>
+
+<td>{{ item.temporada }}</td>
+
+<td>{{ item.ventas }}</td>
+
+</tr>
+
+{% endfor %}
+
+</tbody>
+
+</table>
+
+<div class="grafica">
+
+<canvas id="graficaTendencias"></canvas>
+
+</div>
+
+</div>
+
+</main>
+
+</div>
+
+<script>
+
+const labels = [
+
+{% for item in tendencias %}
+
+"{{ item.temporada }}",
+
+{% endfor %}
+
+];
+
+const dataVentas = [
+
+{% for item in tendencias %}
+
+{{ item.ventas }},
+
+{% endfor %}
+
+];
+
+const ctx = document.getElementById('graficaTendencias');
+
+new Chart(ctx, {
+
+type: 'line',
+
+data: {
+
+labels: labels,
+
+datasets: [{
+
+label: 'Ventas por temporada',
+
+data: dataVentas,
+
+borderWidth: 3,
+
+tension: 0.3
+
+}]
+
+},
+
+options: {
+
+responsive: true,
+
+plugins: {
+
+legend: {
+
+labels: {
+
+color: 'white'
+
+}
+
+}
+
+},
+
+scales: {
+
+x: {
+
+ticks: {
+
+color: 'white'
+
+}
+
+},
+
+y: {
+
+ticks: {
+
+color: 'white'
+
+},
+
+beginAtZero: true
+
+}
+
+}
+
+}
+
+});
+
+</script>
+
+</body>
+</html>
