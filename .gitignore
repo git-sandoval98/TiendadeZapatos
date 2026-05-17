@@ -15,8 +15,4 @@ __pycache__/
 .DS_Store
 Thumbs.db
 
-# Secrets & Local Databases
-.env
-*.db
-tienda.db
 
