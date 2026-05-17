@@ -1,0 +1,138 @@
+@prefix : <http://www.semanticweb.org/Sergio/OntologiaTiendaZapatos#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix xml: <http://www.w3.org/XML/1998/namespace> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+
+<http://www.semanticweb.org/Sergio/OntologiaTiendaZapatos> a owl:Ontology .
+
+# --- Classes ---
+:Zapato a owl:Class .
+:Categoria a owl:Class .
+:Genero a owl:Class .
+:Marca a owl:Class .
+:Inventario a owl:Class .
+:Venta a owl:Class .
+:DetalleVenta a owl:Class .
+:Temporada a owl:Class .
+:MetodoPago a owl:Class .
+
+# --- Object Properties ---
+:tieneCategoria a owl:ObjectProperty ; rdfs:domain :Zapato ; rdfs:range :Categoria .
+:tieneGenero a owl:ObjectProperty ; rdfs:domain :Zapato ; rdfs:range :Genero .
+:tieneMarca a owl:ObjectProperty ; rdfs:domain :Zapato ; rdfs:range :Marca .
+:tieneZapato a owl:ObjectProperty ; rdfs:domain :Inventario ; rdfs:range :Zapato .
+:contieneDetalleVenta a owl:ObjectProperty ; rdfs:domain :Venta ; rdfs:range :DetalleVenta .
+:perteneceATemporada a owl:ObjectProperty ; rdfs:domain :Venta ; rdfs:range :Temporada .
+:tieneMetodoPago a owl:ObjectProperty ; rdfs:domain :Venta ; rdfs:range :MetodoPago .
+:correspondeAInventario a owl:ObjectProperty ; rdfs:domain :DetalleVenta ; rdfs:range :Inventario .
+
+# --- Data Properties ---
+:nombre a owl:DatatypeProperty ; rdfs:domain :Zapato ; rdfs:range xsd:string .
+:precio a owl:DatatypeProperty ; rdfs:domain :Zapato ; rdfs:range xsd:decimal .
+:descripcion a owl:DatatypeProperty ; rdfs:domain :Zapato ; rdfs:range xsd:string .
+:cantidad a owl:DatatypeProperty ; rdfs:domain :Inventario ; rdfs:range xsd:integer .
+:talla a owl:DatatypeProperty ; rdfs:domain :Inventario ; rdfs:range xsd:integer .
+:fechaVenta a owl:DatatypeProperty ; rdfs:domain :Venta ; rdfs:range xsd:dateTime .
+:total a owl:DatatypeProperty ; rdfs:domain :Venta ; rdfs:range xsd:decimal .
+:cantidadVendida a owl:DatatypeProperty ; rdfs:domain :DetalleVenta ; rdfs:range xsd:integer .
+:precioUnitario a owl:DatatypeProperty ; rdfs:domain :DetalleVenta ; rdfs:range xsd:decimal .
+:nombreTemporada a owl:DatatypeProperty ; rdfs:domain :Temporada ; rdfs:range xsd:string .
+:anio a owl:DatatypeProperty ; rdfs:domain :Temporada ; rdfs:range xsd:integer .
+
+# --- Instances (Data) ---
+
+# --- Categories ---
+:Cat_Deportivo a :Categoria ; :nombre "Deportivo" .
+:Cat_Casual a :Categoria ; :nombre "Casual" .
+:Cat_Formal a :Categoria ; :nombre "Formal" .
+:Cat_Botas a :Categoria ; :nombre "Botas" .
+:Cat_Sandalias a :Categoria ; :nombre "Sandalias" .
+
+# --- Genders ---
+:Gen_Hombre a :Genero ; :nombre "Hombre" .
+:Gen_Mujer a :Genero ; :nombre "Mujer" .
+:Gen_Unisex a :Genero ; :nombre "Unisex" .
+
+# --- Brands ---
+:Mar_Nike a :Marca ; :nombre "Nike" .
+:Mar_Adidas a :Marca ; :nombre "Adidas" .
+:Mar_Puma a :Marca ; :nombre "Puma" .
+:Mar_Timberland a :Marca ; :nombre "Timberland" .
+
+# --- 20 Products (Shoes) ---
+:Zap_001 a :Zapato ; :nombre "Air Max 270" ; :precio 150.00 ; :tieneCategoria :Cat_Deportivo ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Nike .
+:Zap_002 a :Zapato ; :nombre "Ultraboost 22" ; :precio 180.00 ; :tieneCategoria :Cat_Deportivo ; :tieneGenero :Gen_Mujer ; :tieneMarca :Mar_Adidas .
+:Zap_003 a :Zapato ; :nombre "Classic Boot" ; :precio 120.00 ; :tieneCategoria :Cat_Botas ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Timberland .
+:Zap_004 a :Zapato ; :nombre "Suede Classic" ; :precio 70.00 ; :tieneCategoria :Cat_Casual ; :tieneGenero :Gen_Unisex ; :tieneMarca :Mar_Puma .
+:Zap_005 a :Zapato ; :nombre "Chuck Taylor All Star" ; :precio 65.00 ; :tieneCategoria :Cat_Casual ; :tieneGenero :Gen_Unisex ; :tieneMarca :Mar_Nike . # Converse/Nike
+:Zap_006 a :Zapato ; :nombre "Stan Smith" ; :precio 85.00 ; :tieneCategoria :Cat_Casual ; :tieneGenero :Gen_Unisex ; :tieneMarca :Mar_Adidas .
+:Zap_007 a :Zapato ; :nombre "Air Force 1" ; :precio 110.00 ; :tieneCategoria :Cat_Casual ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Nike .
+:Zap_008 a :Zapato ; :nombre "Gel-Kayano 29" ; :precio 160.00 ; :tieneCategoria :Cat_Deportivo ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Puma .
+:Zap_009 a :Zapato ; :nombre "Pegasus 40" ; :precio 130.00 ; :tieneCategoria :Cat_Deportivo ; :tieneGenero :Gen_Mujer ; :tieneMarca :Mar_Nike .
+:Zap_010 a :Zapato ; :nombre "Vans Old Skool" ; :precio 75.00 ; :tieneCategoria :Cat_Casual ; :tieneGenero :Gen_Unisex ; :tieneMarca :Mar_Puma .
+:Zap_011 a :Zapato ; :nombre "Dr. Martens 1460" ; :precio 190.00 ; :tieneCategoria :Cat_Botas ; :tieneGenero :Gen_Unisex ; :tieneMarca :Mar_Timberland .
+:Zap_012 a :Zapato ; :nombre "New Balance 574" ; :precio 90.00 ; :tieneCategoria :Cat_Casual ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Adidas .
+:Zap_013 a :Zapato ; :nombre "Cloudfoam Pure" ; :precio 80.00 ; :tieneCategoria :Cat_Deportivo ; :tieneGenero :Gen_Mujer ; :tieneMarca :Mar_Adidas .
+:Zap_014 a :Zapato ; :nombre "Chelsea Boots" ; :precio 140.00 ; :tieneCategoria :Cat_Botas ; :tieneGenero :Gen_Mujer ; :tieneMarca :Mar_Timberland .
+:Zap_015 a :Zapato ; :nombre "Oxford Leather" ; :precio 130.00 ; :tieneCategoria :Cat_Formal ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Puma .
+:Zap_016 a :Zapato ; :nombre "Crocs Classic" ; :precio 50.00 ; :tieneCategoria :Cat_Sandalias ; :tieneGenero :Gen_Unisex ; :tieneMarca :Mar_Puma .
+:Zap_017 a :Zapato ; :nombre "Birkenstock Arizona" ; :precio 110.00 ; :tieneCategoria :Cat_Sandalias ; :tieneGenero :Gen_Unisex ; :tieneMarca :Mar_Timberland .
+:Zap_018 a :Zapato ; :nombre "Puma RS-X" ; :precio 120.00 ; :tieneCategoria :Cat_Deportivo ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Puma .
+:Zap_019 a :Zapato ; :nombre "Reebok Club C" ; :precio 80.00 ; :tieneCategoria :Cat_Casual ; :tieneGenero :Gen_Mujer ; :tieneMarca :Mar_Adidas .
+:Zap_020 a :Zapato ; :nombre "Mocasin Elegante" ; :precio 95.00 ; :tieneCategoria :Cat_Formal ; :tieneGenero :Gen_Hombre ; :tieneMarca :Mar_Timberland .
+
+# --- Inventory For The 20 Shoes ---
+:Inv_001 a :Inventario ; :tieneZapato :Zap_001 ; :talla 42 ; :cantidad 15 .
+:Inv_002 a :Inventario ; :tieneZapato :Zap_002 ; :talla 38 ; :cantidad 10 .
+:Inv_003 a :Inventario ; :tieneZapato :Zap_003 ; :talla 44 ; :cantidad 8 .
+:Inv_004 a :Inventario ; :tieneZapato :Zap_004 ; :talla 40 ; :cantidad 30 .
+:Inv_005 a :Inventario ; :tieneZapato :Zap_005 ; :talla 41 ; :cantidad 25 .
+:Inv_006 a :Inventario ; :tieneZapato :Zap_006 ; :talla 42 ; :cantidad 22 .
+:Inv_007 a :Inventario ; :tieneZapato :Zap_007 ; :talla 43 ; :cantidad 12 .
+:Inv_008 a :Inventario ; :tieneZapato :Zap_008 ; :talla 42 ; :cantidad 18 .
+:Inv_009 a :Inventario ; :tieneZapato :Zap_009 ; :talla 37 ; :cantidad 14 .
+:Inv_010 a :Inventario ; :tieneZapato :Zap_010 ; :talla 39 ; :cantidad 40 .
+:Inv_011 a :Inventario ; :tieneZapato :Zap_011 ; :talla 40 ; :cantidad 5 .
+:Inv_012 a :Inventario ; :tieneZapato :Zap_012 ; :talla 42 ; :cantidad 16 .
+:Inv_013 a :Inventario ; :tieneZapato :Zap_013 ; :talla 36 ; :cantidad 25 .
+:Inv_014 a :Inventario ; :tieneZapato :Zap_014 ; :talla 38 ; :cantidad 9 .
+:Inv_015 a :Inventario ; :tieneZapato :Zap_015 ; :talla 41 ; :cantidad 11 .
+:Inv_016 a :Inventario ; :tieneZapato :Zap_016 ; :talla 40 ; :cantidad 50 .
+:Inv_017 a :Inventario ; :tieneZapato :Zap_017 ; :talla 39 ; :cantidad 30 .
+:Inv_018 a :Inventario ; :tieneZapato :Zap_018 ; :talla 43 ; :cantidad 15 .
+:Inv_019 a :Inventario ; :tieneZapato :Zap_019 ; :talla 38 ; :cantidad 20 .
+:Inv_020 a :Inventario ; :tieneZapato :Zap_020 ; :talla 42 ; :cantidad 7 .
+
+# --- Seasons ---
+:Temp_Verano_2025 a :Temporada ; :nombreTemporada "Verano" ; :anio 2025 .
+:Temp_Invierno_2025 a :Temporada ; :nombreTemporada "Invierno" ; :anio 2025 .
+:Temp_Primavera_2025 a :Temporada ; :nombreTemporada "Primavera" ; :anio 2025 .
+:Temp_Otono_2025 a :Temporada ; :nombreTemporada "Otoño" ; :anio 2025 .
+
+# --- Payment Methods ---
+:Pago_Tarjeta a :MetodoPago ; :nombre "Tarjeta de Credito" .
+:Pago_Efectivo a :MetodoPago ; :nombre "Efectivo" .
+:Pago_Transferencia a :MetodoPago ; :nombre "Transferencia" .
+
+# --- Sales ---
+# Venta 1 (Verano)
+:Venta_001 a :Venta ; :fechaVenta "2025-06-15T10:30:00"^^xsd:dateTime ; :total 300.00 ; :perteneceATemporada :Temp_Verano_2025 ; :tieneMetodoPago :Pago_Tarjeta .
+:Det_Venta_001_1 a :DetalleVenta ; :correspondeAInventario :Inv_001 ; :cantidadVendida 2 ; :precioUnitario 150.00 .
+:Venta_001 :contieneDetalleVenta :Det_Venta_001_1 .
+
+# Venta 2 (Invierno)
+:Venta_002 a :Venta ; :fechaVenta "2025-12-20T14:45:00"^^xsd:dateTime ; :total 120.00 ; :perteneceATemporada :Temp_Invierno_2025 ; :tieneMetodoPago :Pago_Efectivo .
+:Det_Venta_002_1 a :DetalleVenta ; :correspondeAInventario :Inv_003 ; :cantidadVendida 1 ; :precioUnitario 120.00 .
+:Venta_002 :contieneDetalleVenta :Det_Venta_002_1 .
+
+# Venta 3 (Primavera)
+:Venta_003 a :Venta ; :fechaVenta "2025-04-10T11:00:00"^^xsd:dateTime ; :total 180.00 ; :perteneceATemporada :Temp_Primavera_2025 ; :tieneMetodoPago :Pago_Transferencia .
+:Det_Venta_003_1 a :DetalleVenta ; :correspondeAInventario :Inv_012 ; :cantidadVendida 2 ; :precioUnitario 90.00 .
+:Venta_003 :contieneDetalleVenta :Det_Venta_003_1 .
+
+# Venta 4 (Otoño)
+:Venta_004 a :Venta ; :fechaVenta "2025-10-05T16:20:00"^^xsd:dateTime ; :total 190.00 ; :perteneceATemporada :Temp_Otono_2025 ; :tieneMetodoPago :Pago_Tarjeta .
+:Det_Venta_004_1 a :DetalleVenta ; :correspondeAInventario :Inv_011 ; :cantidadVendida 1 ; :precioUnitario 190.00 .
+:Venta_004 :contieneDetalleVenta :Det_Venta_004_1 .

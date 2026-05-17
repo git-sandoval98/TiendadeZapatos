@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ZapatosStore{% endblock %}</title>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar Navegacion -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>ZapatosStore</h2>
+            <p class="user-role">Hola, {{ session.get('user_nombre', 'Usuario') }}</p>
+        </div>
+
+        <ul class="nav-menu">
+            <li><a href="/" class="{{ 'active' if request.path == '/' else '' }}">📊 Dashboard</a></li>
+            <li><a href="/tendencias" class="{{ 'active' if request.path == '/tendencias' else '' }}">📈 Tendencias</a></li>
+            <li><a href="/ventas" class="{{ 'active' if request.path == '/ventas' else '' }}">💰 Ventas</a></li>
+            <li><a href="/inventario" class="{{ 'active' if request.path == '/inventario' else '' }}">📦 Inventario</a></li>
+            <li><a href="/alertas" class="{{ 'active' if request.path == '/alertas' else '' }}">⚠️ Alertas</a></li>
+            <li><a href="/asistente" class="{{ 'active' if request.path == '/asistente' else '' }}">🤖 Asistente IA</a></li>
+            
+            {% if session.get('user_rol') == 'administrador' %}
+            <li class="nav-section">ADMINISTRACIÓN</li>
+            <li><a href="/admin/inventario" class="{{ 'active' if request.path == '/admin/inventario' else '' }}">⚙️ Gestión Inventario</a></li>
+            <li><a href="/admin/usuarios" class="{{ 'active' if request.path == '/admin/usuarios' else '' }}">👥 Usuarios</a></li>
+            {% endif %}
+        </ul>
+
+        <div class="sidebar-footer">
+            <a href="/logout" class="btn-logout">🚪 Cerrar Sesión</a>
+        </div>
+    </aside>
+
+    <!-- Contenido Principal -->
+    <main class="main-content">
+        <!-- Notificaciones Flash -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                        <div class="flash-message {{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <header class="page-header">
+            <h1>{% block page_title %}ZapatosStore{% endblock %}</h1>
+            <p>{% block page_subtitle %}Plataforma de Inteligencia Comercial{% endblock %}</p>
+        </header>
+
+        <section class="content-area">
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

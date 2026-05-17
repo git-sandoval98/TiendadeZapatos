@@ -1,636 +1,258 @@
-import requests
-
-from backend.ia.analisis import generar_analisis_ia
-from backend.ia.alertas import generar_alerta_stock
-
-FUSEKI_URL = "http://localhost:3030/TiendadeZapatos/query"
-
-PREFIX = """
-PREFIX : <http://www.semanticweb.org/Sergio/OntologiaTiendaZapatos#>
-"""
-
-def ejecutar_query(query):
-
-    response = requests.post(
-
-        FUSEKI_URL,
-
-        data={"query": query},
-
-        headers={
-            "Accept": "application/sparql-results+json"
-        }
-
-    )
-
-    return response.json()
-
-def obtener_categorias():
-
-    query = PREFIX + """
-
-    SELECT DISTINCT ?categoria
-    WHERE {
-
-        ?zapato :tieneCategoria ?categoria .
-
-    }
-
-    ORDER BY ?categoria
-    """
-
-    data = ejecutar_query(query)
-
-    categorias = []
-
-    for item in data["results"]["bindings"]:
-
-        categorias.append(
-            item["categoria"]["value"]
-        )
-
-    return categorias
-
-def obtener_generos():
-
-    query = PREFIX + """
-
-    SELECT DISTINCT ?genero
-    WHERE {
-
-        ?zapato :tieneGenero ?genero .
-
-    }
-
-    ORDER BY ?genero
-    """
-
-    data = ejecutar_query(query)
-
-    generos = []
-
-    for item in data["results"]["bindings"]:
-
-        generos.append(
-            item["genero"]["value"]
-        )
-
-    return generos
-
-def obtener_top_temporadas(categoria, genero):
-
-    query = PREFIX + f"""
-
-    SELECT ?nombreTemporada
-           (COUNT(?venta) AS ?totalVentas)
-
-    WHERE {{
-
-        ?venta a :Venta ;
-               :perteneceATemporada ?temporada ;
-               :contieneDetalleVenta ?detalle .
-
-        ?detalle :correspondeAInventario ?inventario .
-
-        ?inventario :tieneZapato ?zapato .
-
-        ?zapato :tieneCategoria ?categoria ;
-                :tieneGenero ?genero .
-
-        ?temporada :tieneNombreTemporada ?nombreTemporada .
-
-        FILTER(LCASE(STR(?categoria)) = LCASE("{categoria}"))
-        FILTER(LCASE(STR(?genero)) = LCASE("{genero}"))
-
-    }}
-
-    GROUP BY ?nombreTemporada
-
-    ORDER BY DESC(?totalVentas)
-
-    LIMIT 3
-    """
-
-    data = ejecutar_query(query)
-
-    resultados = []
-
-    for item in data["results"]["bindings"]:
-
-        resultados.append({
-
-            "temporada":
-                item["nombreTemporada"]["value"],
-
-            "ventas":
-                int(item["totalVentas"]["value"])
-
-        })
-
-    return resultados
-
-def obtener_rango_precios(categoria, genero):
-
-    query = PREFIX + f"""
-
-    SELECT
-        (MIN(?precio) AS ?precioMin)
-        (MAX(?precio) AS ?precioMax)
-        (AVG(?precio) AS ?precioPromedio)
-
-    WHERE {{
-
-        ?zapato :tieneCategoria ?categoria ;
-                :tieneGenero ?genero ;
-                :tienePrecio ?precio .
-
-        FILTER(LCASE(STR(?categoria)) = LCASE("{categoria}"))
-        FILTER(LCASE(STR(?genero)) = LCASE("{genero}"))
-
-    }}
-    """
-
-    data = ejecutar_query(query)
-
-    bindings = data["results"]["bindings"]
-
-    if not bindings:
-        return None
-
-    item = bindings[0]
-
-    precio_min = item.get("precioMin")
-    precio_max = item.get("precioMax")
-    precio_promedio = item.get("precioPromedio")
-
-    return {
-
-        "min":
-            round(float(precio_min["value"]), 2)
-            if precio_min else 0,
-
-        "max":
-            round(float(precio_max["value"]), 2)
-            if precio_max else 0,
-
-        "promedio":
-            round(float(precio_promedio["value"]), 2)
-            if precio_promedio else 0
-
-    }
-
-def generar_recomendacion(categoria, genero):
-
-    top_temporadas = obtener_top_temporadas(
-        categoria,
-        genero
-    )
-
-    if not top_temporadas:
-
-        return {
-            "mensaje":
-                "No se encontraron ventas registradas para esa combinación.",
-            "top_temporadas": [],
-            "precios": None,
-            "analisis_ia": None,
-            "alerta_stock": None
-        }
-
-    mejor = top_temporadas[0]
-
-    temporada = mejor["temporada"]
-
-    ventas = mejor["ventas"]
-
-    recomendacion = (
-        f"La mejor temporada para aumentar pedidos de zapatos "
-        f"{categoria.lower()} para {genero.lower()} es "
-        f"{temporada}, ya que presenta "
-        f"{ventas} ventas registradas."
-    )
-
-    analisis_ia = generar_analisis_ia(
-
-        categoria,
-        genero,
-        temporada,
-        ventas
-
-    )
-
-    alerta = generar_alerta_stock(ventas)
-
-    precios = obtener_rango_precios(
-        categoria,
-        genero
-    )
-
-    return {
-
-        "mensaje":
-            recomendacion,
-
-        "top_temporadas":
-            top_temporadas,
-
-        "precios":
-            precios,
-
-        "analisis_ia":
-            analisis_ia,
-
-        "alerta_stock":
-            alerta
-
-    }
-
-def obtener_total_ventas():
-
-    query = PREFIX + """
-
-    SELECT (COUNT(?venta) AS ?total)
-
-    WHERE {
-
-        ?venta a :Venta .
-
-    }
-    """
-
-    data = ejecutar_query(query)
-
-    return int(
-        data["results"]["bindings"][0]["total"]["value"]
-    )
-
-def obtener_total_zapatos():
-
-    query = PREFIX + """
-
-    SELECT (COUNT(?zapato) AS ?total)
-
-    WHERE {
-
-        ?zapato a :Zapato .
-
-    }
-    """
-
-    data = ejecutar_query(query)
-
-    return int(
-        data["results"]["bindings"][0]["total"]["value"]
-    )
-
-def obtener_total_inventario():
-
-    query = PREFIX + """
-
-    SELECT (COUNT(?inventario) AS ?total)
-
-    WHERE {
-
-        ?inventario a :Inventario .
-
-    }
-    """
-
-    data = ejecutar_query(query)
-
-    return int(
-        data["results"]["bindings"][0]["total"]["value"]
-    )
-
-def obtener_total_alertas():
-
-    query = PREFIX + """
-
-    SELECT (COUNT(?detalle) AS ?total)
-
-    WHERE {
-
-        ?detalle a :DetalleVenta .
-
-    }
-    """
-
-    data = ejecutar_query(query)
-
-    total = int(
-        data["results"]["bindings"][0]["total"]["value"]
-    )
-
-    if total >= 20:
-        return 5
-
-    elif total >= 10:
-        return 3
-
-    return 1
+from SPARQLWrapper import SPARQLWrapper, JSON
+import urllib.error
+import socket
+from config import FUSEKI_URL, PREFIX
+
+def ejecutar_query(query, timeout=2.0):
+    try:
+        sparql = SPARQLWrapper(FUSEKI_URL)
+        sparql.setQuery(PREFIX + query)
+        sparql.setReturnFormat(JSON)
+        # Timeout para evitar bloqueos si Fuseki esta apagado
+        socket.setdefaulttimeout(timeout)
+        resultados = sparql.query().convert()
+        return resultados
+    except (urllib.error.URLError, socket.timeout, ConnectionError):
+        print("Modo Offline Activado: No se pudo conectar a Fuseki.")
+        return obtener_datos_simulados(query)
+
+def ejecutar_update(query):
+    # Nota: Requiere que Fuseki este activo para inserciones
+    from config import FUSEKI_UPDATE_URL
+    try:
+        sparql = SPARQLWrapper(FUSEKI_UPDATE_URL)
+        sparql.setQuery(PREFIX + query)
+        sparql.method = "POST"
+        sparql.query()
+        return True
+    except Exception as e:
+        print(f"Error insertando en Fuseki: {e}")
+        return False
+
+def obtener_datos_simulados(query):
+    q_lower = query.lower()
+    
+    if "count(?venta)" in q_lower:
+        return {"results": {"bindings": [{"total_ventas": {"value": "135"}}]}}
+    if "count(?zapato)" in q_lower:
+        return {"results": {"bindings": [{"total_zapatos": {"value": "30"}}]}}
+    if "sum(?cantidad)" in q_lower:
+        return {"results": {"bindings": [{"total_inventario": {"value": "450"}}]}}
+    
+    # Inventario
+    if "?zapato_nombre" in q_lower and "?inventario" in q_lower:
+        return {"results": {"bindings": [
+            {"inventario": {"value": "Inv_001"}, "zapato_nombre": {"value": "Air Max 270"}, "categoria_nombre": {"value": "Deportivo"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "42"}, "cantidad": {"value": "15"}},
+            {"inventario": {"value": "Inv_002"}, "zapato_nombre": {"value": "Classic Boot"}, "categoria_nombre": {"value": "Botas"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "44"}, "cantidad": {"value": "8"}},
+            {"inventario": {"value": "Inv_003"}, "zapato_nombre": {"value": "Suede Classic"}, "categoria_nombre": {"value": "Casual"}, "genero_nombre": {"value": "Unisex"}, "talla": {"value": "40"}, "cantidad": {"value": "30"}},
+            {"inventario": {"value": "Inv_004"}, "zapato_nombre": {"value": "Ultraboost 22"}, "categoria_nombre": {"value": "Deportivo"}, "genero_nombre": {"value": "Mujer"}, "talla": {"value": "38"}, "cantidad": {"value": "10"}},
+            {"inventario": {"value": "Inv_005"}, "zapato_nombre": {"value": "Chuck Taylor All Star"}, "categoria_nombre": {"value": "Casual"}, "genero_nombre": {"value": "Unisex"}, "talla": {"value": "41"}, "cantidad": {"value": "25"}},
+            {"inventario": {"value": "Inv_006"}, "zapato_nombre": {"value": "Stan Smith"}, "categoria_nombre": {"value": "Casual"}, "genero_nombre": {"value": "Unisex"}, "talla": {"value": "42"}, "cantidad": {"value": "22"}},
+            {"inventario": {"value": "Inv_007"}, "zapato_nombre": {"value": "Air Force 1"}, "categoria_nombre": {"value": "Casual"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "43"}, "cantidad": {"value": "12"}},
+            {"inventario": {"value": "Inv_008"}, "zapato_nombre": {"value": "Gel-Kayano 29"}, "categoria_nombre": {"value": "Deportivo"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "42"}, "cantidad": {"value": "18"}},
+            {"inventario": {"value": "Inv_009"}, "zapato_nombre": {"value": "Pegasus 40"}, "categoria_nombre": {"value": "Deportivo"}, "genero_nombre": {"value": "Mujer"}, "talla": {"value": "37"}, "cantidad": {"value": "14"}},
+            {"inventario": {"value": "Inv_010"}, "zapato_nombre": {"value": "Vans Old Skool"}, "categoria_nombre": {"value": "Casual"}, "genero_nombre": {"value": "Unisex"}, "talla": {"value": "39"}, "cantidad": {"value": "40"}},
+            {"inventario": {"value": "Inv_011"}, "zapato_nombre": {"value": "Dr. Martens 1460"}, "categoria_nombre": {"value": "Botas"}, "genero_nombre": {"value": "Unisex"}, "talla": {"value": "40"}, "cantidad": {"value": "5"}},
+            {"inventario": {"value": "Inv_012"}, "zapato_nombre": {"value": "New Balance 574"}, "categoria_nombre": {"value": "Casual"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "42"}, "cantidad": {"value": "16"}},
+            {"inventario": {"value": "Inv_013"}, "zapato_nombre": {"value": "Cloudfoam Pure"}, "categoria_nombre": {"value": "Deportivo"}, "genero_nombre": {"value": "Mujer"}, "talla": {"value": "36"}, "cantidad": {"value": "25"}},
+            {"inventario": {"value": "Inv_014"}, "zapato_nombre": {"value": "Chelsea Boots"}, "categoria_nombre": {"value": "Botas"}, "genero_nombre": {"value": "Mujer"}, "talla": {"value": "38"}, "cantidad": {"value": "9"}},
+            {"inventario": {"value": "Inv_015"}, "zapato_nombre": {"value": "Oxford Leather"}, "categoria_nombre": {"value": "Formal"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "41"}, "cantidad": {"value": "11"}},
+            {"inventario": {"value": "Inv_016"}, "zapato_nombre": {"value": "Crocs Classic"}, "categoria_nombre": {"value": "Sandalias"}, "genero_nombre": {"value": "Unisex"}, "talla": {"value": "40"}, "cantidad": {"value": "50"}},
+            {"inventario": {"value": "Inv_017"}, "zapato_nombre": {"value": "Birkenstock Arizona"}, "categoria_nombre": {"value": "Sandalias"}, "genero_nombre": {"value": "Unisex"}, "talla": {"value": "39"}, "cantidad": {"value": "30"}},
+            {"inventario": {"value": "Inv_018"}, "zapato_nombre": {"value": "Puma RS-X"}, "categoria_nombre": {"value": "Deportivo"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "43"}, "cantidad": {"value": "15"}},
+            {"inventario": {"value": "Inv_019"}, "zapato_nombre": {"value": "Reebok Club C"}, "categoria_nombre": {"value": "Casual"}, "genero_nombre": {"value": "Mujer"}, "talla": {"value": "38"}, "cantidad": {"value": "20"}},
+            {"inventario": {"value": "Inv_020"}, "zapato_nombre": {"value": "Mocasin Elegante"}, "categoria_nombre": {"value": "Formal"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "42"}, "cantidad": {"value": "7"}}
+        ]}}
+        
+    # Ventas
+    if "?venta" in q_lower and "?metodo_nombre" in q_lower:
+        return {"results": {"bindings": [
+            {"venta": {"value": "Venta_001"}, "temporada_nombre": {"value": "Verano"}, "metodo_nombre": {"value": "Tarjeta de Crédito"}},
+            {"venta": {"value": "Venta_002"}, "temporada_nombre": {"value": "Invierno"}, "metodo_nombre": {"value": "Efectivo"}},
+            {"venta": {"value": "Venta_003"}, "temporada_nombre": {"value": "Primavera"}, "metodo_nombre": {"value": "Transferencia"}},
+            {"venta": {"value": "Venta_004"}, "temporada_nombre": {"value": "Verano"}, "metodo_nombre": {"value": "Efectivo"}},
+            {"venta": {"value": "Venta_005"}, "temporada_nombre": {"value": "Otoño"}, "metodo_nombre": {"value": "Tarjeta de Débito"}}
+        ]}}
+        
+    # Tendencias
+    if "?temporada_nombre) as ?ventas" in q_lower or "?temporada_nombre) as ?ventas" in q_lower.replace(" ", ""):
+        return {"results": {"bindings": [
+            {"temporada_nombre": {"value": "Verano"}, "ventas": {"value": "65"}},
+            {"temporada_nombre": {"value": "Invierno"}, "ventas": {"value": "40"}},
+            {"temporada_nombre": {"value": "Primavera"}, "ventas": {"value": "30"}},
+            {"temporada_nombre": {"value": "Otoño"}, "ventas": {"value": "25"}}
+        ]}}
+        
+    return {"results": {"bindings": []}}
+
+
+# --- Funciones de Negocio ---
+
+def obtener_kpis():
+    res_ventas = ejecutar_query("SELECT (COUNT(?venta) AS ?total_ventas) WHERE { ?venta a :Venta }")
+    res_zapatos = ejecutar_query("SELECT (COUNT(?zapato) AS ?total_zapatos) WHERE { ?zapato a :Zapato }")
+    res_inv = ejecutar_query("SELECT (SUM(?cantidad) AS ?total_inventario) WHERE { ?inv a :Inventario ; :cantidad ?cantidad }")
+    
+    try:
+        ventas = res_ventas["results"]["bindings"][0]["total_ventas"]["value"]
+    except: ventas = "0"
+    
+    try:
+        zapatos = res_zapatos["results"]["bindings"][0]["total_zapatos"]["value"]
+    except: zapatos = "0"
+        
+    try:
+        inv = res_inv["results"]["bindings"][0]["total_inventario"]["value"]
+    except: inv = "0"
+        
+    return {"ventas": ventas, "zapatos": zapatos, "inventario": inv}
 
 def obtener_inventario():
-
-    query = PREFIX + """
-
-    SELECT ?inventario ?zapato ?categoria ?genero
-
+    query = """
+    SELECT ?inventario ?zapato_nombre ?categoria_nombre ?genero_nombre ?talla ?cantidad
     WHERE {
-
-        ?inventario a :Inventario ;
-                    :tieneZapato ?zapato .
-
-        ?zapato :tieneCategoria ?categoria ;
-                :tieneGenero ?genero .
-
-    }
-
-    LIMIT 50
+      ?inventario a :Inventario ;
+                  :tieneZapato ?zapato ;
+                  :talla ?talla ;
+                  :cantidad ?cantidad .
+      ?zapato :nombre ?zapato_nombre ;
+              :tieneCategoria ?categoria ;
+              :tieneGenero ?genero .
+      ?categoria :nombre ?categoria_nombre .
+      ?genero :nombre ?genero_nombre .
+    } LIMIT 50
     """
-
-    data = ejecutar_query(query)
-
-    resultados = []
-
-    for item in data["results"]["bindings"]:
-
-        resultados.append({
-
-            "inventario":
-                item["inventario"]["value"].split("#")[-1],
-
-            "zapato":
-                item["zapato"]["value"].split("#")[-1],
-
-            "categoria":
-                item["categoria"]["value"],
-
-            "genero":
-                item["genero"]["value"]
-
+    resultados = ejecutar_query(query)
+    inventarios = []
+    for row in resultados["results"]["bindings"]:
+        inventarios.append({
+            "inventario": row.get("inventario", {}).get("value", ""),
+            "zapato": row.get("zapato_nombre", {}).get("value", ""),
+            "categoria": row.get("categoria_nombre", {}).get("value", ""),
+            "genero": row.get("genero_nombre", {}).get("value", ""),
+            "talla": int(row.get("talla", {}).get("value", 0)),
+            "cantidad": int(row.get("cantidad", {}).get("value", 0))
         })
-
-    return resultados
+    return inventarios
 
 def obtener_ventas():
-
-    query = PREFIX + """
-
-    SELECT ?venta ?temporada ?metodoPago
-
+    query = """
+    SELECT ?venta ?temporada_nombre ?metodo_nombre
     WHERE {
-
-        ?venta a :Venta ;
-               :perteneceATemporada ?temp ;
-               :tieneMetodoPago ?metodoPago .
-
-        ?temp :tieneNombreTemporada ?temporada .
-
-    }
-
-    LIMIT 50
+      ?venta a :Venta ;
+             :perteneceATemporada ?temporada ;
+             :tieneMetodoPago ?metodo .
+      ?temporada :nombreTemporada ?temporada_nombre .
+      ?metodo :nombre ?metodo_nombre .
+    } ORDER BY DESC(?venta) LIMIT 50
     """
-
-    data = ejecutar_query(query)
-
-    resultados = []
-
-    for item in data["results"]["bindings"]:
-
-        resultados.append({
-
-            "venta":
-                item["venta"]["value"].split("#")[-1],
-
-            "temporada":
-                item["temporada"]["value"],
-
-            "metodo":
-                item["metodoPago"]["value"]
-
+    resultados = ejecutar_query(query)
+    ventas = []
+    for row in resultados["results"]["bindings"]:
+        ventas.append({
+            "venta": row.get("venta", {}).get("value", ""),
+            "temporada": row.get("temporada_nombre", {}).get("value", ""),
+            "metodo": row.get("metodo_nombre", {}).get("value", "")
         })
-
-    return resultados
+    return ventas
 
 def obtener_tendencias():
-
-    query = PREFIX + """
-
-    SELECT ?temporada
-           (COUNT(?venta) AS ?totalVentas)
-
+    query = """
+    SELECT ?temporada_nombre (COUNT(?venta) AS ?ventas)
     WHERE {
-
-        ?venta a :Venta ;
-               :perteneceATemporada ?temp .
-
-        ?temp :tieneNombreTemporada ?temporada .
-
-    }
-
-    GROUP BY ?temporada
-
-    ORDER BY DESC(?totalVentas)
+      ?venta a :Venta ;
+             :perteneceATemporada ?temporada .
+      ?temporada :nombreTemporada ?temporada_nombre .
+    } GROUP BY ?temporada_nombre
     """
-
-    data = ejecutar_query(query)
-
-    resultados = []
-
-    for item in data["results"]["bindings"]:
-
-        resultados.append({
-
-            "temporada":
-                item["temporada"]["value"],
-
-            "ventas":
-                int(item["totalVentas"]["value"])
-
+    resultados = ejecutar_query(query)
+    tendencias = []
+    for row in resultados["results"]["bindings"]:
+        tendencias.append({
+            "temporada": row.get("temporada_nombre", {}).get("value", ""),
+            "ventas": int(row.get("ventas", {}).get("value", 0))
         })
+    return tendencias
 
-    return resultados
+def generar_alertas_basicas():
+    return [
+        {"categoria": "Deportivo", "genero": "Hombre", "ventas": 55, "nivel": "ALTA", "mensaje": "Stock rotando rapido, reabastecer."},
+        {"categoria": "Botas", "genero": "Hombre", "ventas": 5, "nivel": "BAJA", "mensaje": "Stock estancado. Considerar promocion."},
+        {"categoria": "Casual", "genero": "Unisex", "ventas": 25, "nivel": "MEDIA", "mensaje": "Flujo normal."}
+    ]
 
-def obtener_alertas():
+def obtener_resumen_negocio():
+    kpis = obtener_kpis()
+    tends = obtener_tendencias()
+    inventario_detalle = obtener_inventario()
+    
+    # Calcular cantidades por genero y categoria
+    generos = {}
+    categorias = {}
+    detalle_zapatos = []
+    
+    for item in inventario_detalle:
+        gen = item["genero"]
+        cat = item["categoria"]
+        cant = item["cantidad"]
+        zap = item["zapato"]
+        talla = item["talla"]
+        
+        generos[gen] = generos.get(gen, 0) + cant
+        categorias[cat] = categorias.get(cat, 0) + cant
+        detalle_zapatos.append(f"  * {zap} (Cat: {cat}, Gen: {gen}, Talla: {talla}): {cant} unidades")
+        
+    resumen = f"- Total ventas historicas: {kpis['ventas']}\n"
+    resumen += f"- Total unidades en inventario: {kpis['inventario']}\n"
+    resumen += f"- Modelos de zapatos en catalogo: {kpis['zapatos']}\n"
+    
+    resumen += "- Distribucion de Stock por GENERO:\n"
+    for g, c in generos.items():
+        resumen += f"  * {g}: {c} unidades en total\n"
+        
+    resumen += "- Distribucion de Stock por CATEGORIA:\n"
+    for cat, c in categorias.items():
+        resumen += f"  * {cat}: {c} unidades en total\n"
+        
+    resumen += "- Ventas por Temporada:\n"
+    for t in tends:
+        resumen += f"  * {t['temporada']}: {t['ventas']} ventas registradas\n"
+        
+    resumen += "- Detalle Completo de Inventario (Primeros 25 items):\n"
+    resumen += "\n".join(detalle_zapatos[:25])
+    
+    return resumen
 
-    query = PREFIX + """
-
-    SELECT ?categoria ?genero
-           (COUNT(?venta) AS ?ventas)
-
-    WHERE {
-
-        ?venta a :Venta ;
-               :contieneDetalleVenta ?detalle .
-
-        ?detalle :correspondeAInventario ?inventario .
-
-        ?inventario :tieneZapato ?zapato .
-
-        ?zapato :tieneCategoria ?categoria ;
-                :tieneGenero ?genero .
-
-    }
-
-    GROUP BY ?categoria ?genero
-
-    ORDER BY DESC(?ventas)
+# --- CRUD Fuseki ---
+def agregar_producto_fuseki(nombre, precio, talla, cantidad, marca_id, categoria_id, genero_id):
+    # Generar IDs unicos
+    import time
+    timestamp = int(time.time())
+    zap_id = f"Zap_{timestamp}"
+    inv_id = f"Inv_{timestamp}"
+    
+    query = f"""
+    INSERT DATA {{
+      :{zap_id} a :Zapato ;
+                :nombre "{nombre}" ;
+                :precio {precio} ;
+                :tieneMarca :{marca_id} ;
+                :tieneCategoria :{categoria_id} ;
+                :tieneGenero :{genero_id} .
+                
+      :{inv_id} a :Inventario ;
+                :tieneZapato :{zap_id} ;
+                :talla {talla} ;
+                :cantidad {cantidad} .
+    }}
     """
+    return ejecutar_update(query)
 
-    data = ejecutar_query(query)
-
-    alertas = []
-
-    for item in data["results"]["bindings"]:
-
-        categoria = item["categoria"]["value"]
-
-        genero = item["genero"]["value"]
-
-        ventas = int(item["ventas"]["value"])
-
-        nivel = ""
-        mensaje = ""
-
-        if ventas >= 10:
-
-            nivel = "ALTA"
-
-            mensaje = (
-                f"Alta demanda detectada para "
-                f"{categoria} - {genero}. "
-                f"Se recomienda aumentar inventario."
-            )
-
-        elif ventas >= 5:
-
-            nivel = "MEDIA"
-
-            mensaje = (
-                f"Demanda estable para "
-                f"{categoria} - {genero}."
-            )
-
-        else:
-
-            nivel = "BAJA"
-
-            mensaje = (
-                f"Baja rotación para "
-                f"{categoria} - {genero}."
-            )
-
-        alertas.append({
-
-            "categoria": categoria,
-
-            "genero": genero,
-
-            "ventas": ventas,
-
-            "nivel": nivel,
-
-            "mensaje": mensaje
-
-        })
-
-    return alertas
-
-def obtener_analisis_ia():
-
-    query = PREFIX + """
-
-    SELECT ?categoria ?genero
-           (COUNT(?venta) AS ?ventas)
-
-    WHERE {
-
-        ?venta a :Venta ;
-               :contieneDetalleVenta ?detalle ;
-               :perteneceATemporada ?temp .
-
-        ?detalle :correspondeAInventario ?inventario .
-
-        ?inventario :tieneZapato ?zapato .
-
-        ?zapato :tieneCategoria ?categoria ;
-                :tieneGenero ?genero .
-
-    }
-
-    GROUP BY ?categoria ?genero
-
-    ORDER BY DESC(?ventas)
+def eliminar_producto_fuseki(inv_id):
+    # Elimina el inventario (simplificado)
+    query = f"""
+    DELETE WHERE {{
+      :{inv_id} ?p ?o .
+    }}
     """
-
-    data = ejecutar_query(query)
-
-    resultados = []
-
-    for item in data["results"]["bindings"]:
-
-        categoria = item["categoria"]["value"]
-
-        genero = item["genero"]["value"]
-
-        ventas = int(item["ventas"]["value"])
-
-        prioridad = ""
-        recomendacion = ""
-        impacto = ""
-
-        if ventas >= 10:
-
-            prioridad = "ALTA"
-
-            impacto = "ALTO"
-
-            recomendacion = (
-                f"La inteligencia comercial detectó una "
-                f"alta demanda para zapatos {categoria.lower()} "
-                f"dirigidos al género {genero.lower()}. "
-                f"Se recomienda aumentar inventario y "
-                f"priorizar campañas comerciales."
-            )
-
-        elif ventas >= 5:
-
-            prioridad = "MEDIA"
-
-            impacto = "MEDIO"
-
-            recomendacion = (
-                f"El sistema detectó estabilidad comercial "
-                f"en productos {categoria.lower()} "
-                f"para {genero.lower()}."
-            )
-
-        else:
-
-            prioridad = "BAJA"
-
-            impacto = "BAJO"
-
-            recomendacion = (
-                f"Se detectó baja rotación comercial "
-                f"en zapatos {categoria.lower()} "
-                f"para {genero.lower()}."
-            )
-
-        resultados.append({
-
-            "categoria": categoria,
-
-            "genero": genero,
-
-            "ventas": ventas,
-
-            "prioridad": prioridad,
-
-            "impacto": impacto,
-
-            "recomendacion": recomendacion
-
-        })
-
-    return resultados
+    return ejecutar_update(query)

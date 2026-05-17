@@ -1,94 +1,46 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+{% extends "base.html" %}
 
-<meta charset="UTF-8">
+{% block title %}Alertas - ZapatosStore{% endblock %}
+{% block page_title %}Alertas Inteligentes{% endblock %}
+{% block page_subtitle %}Monitoreo automático de stock y demanda{% endblock %}
 
-<title>Alertas</title>
-
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/styles.css') }}">
-
-</head>
-
-<body>
-
-<div class="layout">
-
-<aside class="sidebar">
-
-<h2>Tienda de Zapatos mio</h2>
-
-<ul>
-
-<li><a href="/">🏠 Inicio</a></li>
-<li><a href="/dashboard">Dashboard</a></li>
-<li><a href="/ia">IA Comercial</a></li>
-<li><a href="/tendencias">Tendencias</a></li>
-<li><a href="/ventas">Ventas</a></li>
-<li><a href="/inventario">Inventario</a></li>
-<li><a href="/alertas">Alertas</a></li>
-
-</ul>
-
-</aside>
-
-<main class="main">
-
-<h1>Alertas Inteligentes</h1>
-
-<div class="resultado">
-
-<h3>Monitoreo automático</h3>
-
-<table class="tabla">
-
-<thead>
-
-<tr>
-
-<th>#</th>
-<th>Categoría</th>
-<th>Género</th>
-<th>Ventas</th>
-<th>Nivel</th>
-<th>Mensaje</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for alerta in alertas %}
-
-<tr>
-
-<td>{{ loop.index }}</td>
-
-<td>{{ alerta.categoria }}</td>
-
-<td>{{ alerta.genero }}</td>
-
-<td>{{ alerta.ventas }}</td>
-
-<td>{{ alerta.nivel }}</td>
-
-<td>{{ alerta.mensaje }}</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
+{% block content %}
+<div class="table-container">
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Categoría</th>
+                <th>Género</th>
+                <th>Ventas</th>
+                <th>Nivel</th>
+                <th>Recomendación</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alerta in alertas %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ alerta.categoria }}</strong></td>
+                <td>{{ alerta.genero }}</td>
+                <td>{{ alerta.ventas }}</td>
+                <td>
+                    {% if alerta.nivel == 'ALTA' %}
+                        <span class="badge badge-success">ALTA</span>
+                    {% elif alerta.nivel == 'MEDIA' %}
+                        <span class="badge badge-warning">MEDIA</span>
+                    {% else %}
+                        <span class="badge badge-danger">BAJA</span>
+                    {% endif %}
+                </td>
+                <td><span style="color:var(--text-muted); font-size:14px;">{{ alerta.mensaje }}</span></td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="6" style="text-align:center;">No hay alertas generadas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-
-</main>
-
-</div>
-
-</body>
-</html>
+{% endblock %}

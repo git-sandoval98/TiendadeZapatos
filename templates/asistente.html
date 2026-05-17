@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Asistente IA - ZapatosStore{% endblock %}
+{% block page_title %}Asistente Comercial Inteligente{% endblock %}
+{% block page_subtitle %}Consulta el estado de tu negocio en lenguaje natural{% endblock %}
+
+{% block content %}
+<div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+        <!-- Mensaje de bienvenida -->
+        <div class="chat-bubble ai">
+            👋 ¡Hola {{ session.get('user_nombre') }}! Soy tu asistente comercial de ZapatosStore. <br><br>
+            Estoy conectado a la base de datos de tu tienda. Puedes preguntarme sobre ventas, inventario, tendencias o pedirme recomendaciones.
+        </div>
+        
+        <!-- Historial -->
+        {% for msg in historial %}
+            <div class="chat-bubble {{ 'user' if msg.rol_mensaje == 'user' else 'ai' }}">
+                {{ msg.contenido | safe }}
+            </div>
+        {% endfor %}
+    </div>
+    
+    <div class="chat-input-area">
+        <input type="text" id="chat-input" placeholder="Ej: ¿Qué marca se vende más en verano?..." autocomplete="off">
+        <button id="btn-send" class="btn btn-primary" onclick="sendMessage()">Enviar</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

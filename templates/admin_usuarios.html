@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Usuarios - ZapatosStore Admin{% endblock %}
+{% block page_title %}Gestión de Usuarios{% endblock %}
+{% block page_subtitle %}Usuarios registrados en la plataforma{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nombre Completo</th>
+                <th>Correo</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Fecha Registro</th>
+                <th>Último Acceso</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for u in usuarios %}
+            <tr>
+                <td>{{ u.id }}</td>
+                <td><strong>{{ u.nombre }} {{ u.apellido }}</strong></td>
+                <td>{{ u.email }}</td>
+                <td>
+                    {% if u.rol == 'administrador' %}
+                        <span class="badge" style="background:#2C241E; color:white;">ADMINISTRADOR</span>
+                    {% else %}
+                        <span class="badge badge-success">USUARIO</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if u.activo %}
+                        <span style="color:var(--success);">● Activo</span>
+                    {% else %}
+                        <span style="color:var(--danger);">● Inactivo</span>
+                    {% endif %}
+                </td>
+                <td style="color:var(--text-muted); font-size:13px;">{{ u.fecha_registro }}</td>
+                <td style="color:var(--text-muted); font-size:13px;">{{ u.ultimo_acceso or 'Nunca' }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="7" style="text-align:center;">No hay usuarios.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

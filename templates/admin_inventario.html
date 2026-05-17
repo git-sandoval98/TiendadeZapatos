@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}Inventario - ZapatosStore Admin{% endblock %}
+{% block page_title %}Gestión de Inventario (Fuseki){% endblock %}
+{% block page_subtitle %}Agregar productos a la base de datos semántica{% endblock %}
+
+{% block content %}
+<div class="cards-dashboard" style="grid-template-columns: 1fr 2fr;">
+    
+    <!-- Formulario Agregar Producto -->
+    <div class="glass-card" style="padding: 25px;">
+        <h3 style="margin-bottom:20px; color:var(--primary);">Añadir Nuevo Producto</h3>
+        <form method="POST" action="/admin/inventario/agregar">
+            <div class="form-group">
+                <label>Nombre del Zapato</label>
+                <input type="text" name="nombre" required placeholder="Ej: Zapato Elegante">
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <div class="form-group" style="flex:1;">
+                    <label>Precio ($)</label>
+                    <input type="number" step="0.01" name="precio" required placeholder="50.00">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Talla</label>
+                    <input type="number" name="talla" required placeholder="42">
+                </div>
+                <div class="form-group" style="flex:1;">
+                    <label>Cantidad</label>
+                    <input type="number" name="cantidad" required placeholder="10">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Marca</label>
+                <select name="marca">
+                    <option value="Mar_Nike">Nike</option>
+                    <option value="Mar_Adidas">Adidas</option>
+                    <option value="Mar_Puma">Puma</option>
+                    <option value="Mar_Timberland">Timberland</option>
+                    <option value="Mar_Generica">Otra</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Categoría</label>
+                <select name="categoria">
+                    <option value="Cat_Deportivo">Deportivo</option>
+                    <option value="Cat_Casual">Casual</option>
+                    <option value="Cat_Formal">Formal</option>
+                    <option value="Cat_Botas">Botas</option>
+                    <option value="Cat_Sandalias">Sandalias</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Género</label>
+                <select name="genero">
+                    <option value="Gen_Hombre">Hombre</option>
+                    <option value="Gen_Mujer">Mujer</option>
+                    <option value="Gen_Unisex">Unisex</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100" style="margin-top:10px;">➕ Guardar en Fuseki</button>
+        </form>
+    </div>
+
+    <!-- Lista de Inventario -->
+    <div class="table-container">
+        <table class="tabla">
+            <thead>
+                <tr>
+                    <th>ID RDF</th>
+                    <th>Producto</th>
+                    <th>Cat / Gen</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in inventarios %}
+                <tr>
+                    <td style="font-size:12px; color:var(--text-muted);">{{ item.inventario.split('_')[-1] if '_' in item.inventario else item.inventario }}</td>
+                    <td><strong>{{ item.zapato }}</strong></td>
+                    <td><span class="badge badge-warning">{{ item.categoria }}</span> <br> <span style="font-size:12px">{{ item.genero }}</span></td>
+                    <td>
+                        <a href="/admin/inventario/eliminar?id={{ item.inventario }}" 
+                           class="badge badge-danger" 
+                           style="text-decoration:none;"
+                           onclick="return confirm('¿Seguro que deseas eliminar este registro de Fuseki?');">🗑️ Eliminar</a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="4" style="text-align:center;">No hay inventario registrado.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

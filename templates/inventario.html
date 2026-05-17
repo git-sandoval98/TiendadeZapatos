@@ -1,91 +1,36 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+{% extends "base.html" %}
 
-<meta charset="UTF-8">
+{% block title %}Inventario - ZapatosStore{% endblock %}
+{% block page_title %}Catálogo e Inventario{% endblock %}
+{% block page_subtitle %}Gestión de stock de la tienda{% endblock %}
 
-<title>Inventario</title>
-
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/styles.css') }}">
-
-</head>
-
-<body>
-
-<div class="layout">
-
-<aside class="sidebar">
-
-<h2>Tienda de Zapatos mio</h2>
-
-<ul>
-
-<li><a href="/">🏠 Inicio</a></li>
-<li><a href="/dashboard">Dashboard</a></li>
-<li><a href="/ia">IA Comercial</a></li>
-<li><a href="/tendencias">Tendencias</a></li>
-<li><a href="/ventas">Ventas</a></li>
-<li><a href="/inventario">Inventario</a></li>
-<li><a href="/alertas">Alertas</a></li>
-
-</ul>
-
-</aside>
-
-<main class="main">
-
-<h1>Inventario Inteligente</h1>
-
-<div class="resultado">
-
-<h3>Productos registrados</h3>
-
-<table class="tabla">
-
-<thead>
-
-<tr>
-
-<th>#</th>
-<th>Inventario</th>
-<th>Zapato</th>
-<th>Categoría</th>
-<th>Género</th>
-
-</tr>
-
-</thead>
-
-<tbody>
-
-{% for item in inventarios %}
-
-<tr>
-
-<td>{{ loop.index }}</td>
-
-<td>{{ item.inventario }}</td>
-
-<td>{{ item.zapato }}</td>
-
-<td>{{ item.categoria }}</td>
-
-<td>{{ item.genero }}</td>
-
-</tr>
-
-{% endfor %}
-
-</tbody>
-
-</table>
-
+{% block content %}
+<div class="table-container">
+    <table class="tabla">
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Producto</th>
+                <th>Categoría</th>
+                <th>Género</th>
+                <th>ID Inventario</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in inventarios %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td><strong>{{ item.zapato }}</strong></td>
+                <td><span class="badge badge-warning">{{ item.categoria }}</span></td>
+                <td>{{ item.genero }}</td>
+                <td style="color:var(--text-muted);">{{ item.inventario.split('_')[-1] if '_' in item.inventario else item.inventario }}</td>
+            </tr>
+            {% else %}
+            <tr>
+                <td colspan="5" style="text-align:center;">No hay inventario registrado.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
-
-</main>
-
-</div>
-
-</body>
-</html>
+{% endblock %}

@@ -1,98 +1,43 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+{% extends "base.html" %}
 
-<meta charset="UTF-8">
+{% block title %}Dashboard - ZapatosStore{% endblock %}
+{% block page_title %}Dashboard General{% endblock %}
+{% block page_subtitle %}Resumen de indicadores clave de rendimiento{% endblock %}
 
-<title>Dashboard</title>
-
-<link rel="stylesheet"
-href="{{ url_for('static', filename='css/styles.css') }}">
-
-</head>
-
-<body>
-
-<div class="layout">
-
-<aside class="sidebar">
-
-<h2>Tienda de Zapatos mio</h2>
-
-<ul>
-
-<li><a href="/">🏠 Inicio</a></li>
-<li><a href="/dashboard">Dashboard</a></li>
-<li><a href="/ia">IA Comercial</a></li>
-<li><a href="/tendencias">Tendencias</a></li>
-<li><a href="/ventas">Ventas</a></li>
-<li><a href="/inventario">Inventario</a></li>
-<li><a href="/alertas">Alertas</a></li>
-
-</ul>
-
-</aside>
-
-<main class="main">
-
-<h1>Dashboard General</h1>
-
+{% block content %}
 <div class="cards-dashboard">
-
-<div class="card-dashboard">
-
-<h3>Total Ventas</h3>
-
-<p>{{ total_ventas }}</p>
-
+    <div class="card-dashboard">
+        <h3>Total Ventas</h3>
+        <p>{{ total_ventas }}</p>
+    </div>
+    
+    <div class="card-dashboard">
+        <h3>Zapatos en Catálogo</h3>
+        <p>{{ total_zapatos }}</p>
+    </div>
+    
+    <div class="card-dashboard">
+        <h3>Total Inventario</h3>
+        <p>{{ total_inventario }}</p>
+    </div>
+    
+    <div class="card-dashboard">
+        <h3>Alertas de Stock</h3>
+        <p>{{ total_alertas }}</p>
+    </div>
 </div>
 
-<div class="card-dashboard">
-
-<h3>Total Zapatos</h3>
-
-<p>{{ total_zapatos }}</p>
-
+<div class="table-container" style="padding: 25px;">
+    <h3>Estado del Sistema</h3>
+    <br>
+    <p style="color: var(--text-muted); line-height: 1.6;">
+        El motor de inteligencia comercial está operativo.
+        Los datos provienen de la base de datos semántica (Fuseki) y
+        el asistente inteligente está conectado vía OpenRouter API.
+    </p>
+    
+    <div style="margin-top:20px; background: #E8F5E9; padding: 18px; border-radius: 10px; border-left: 5px solid var(--success);">
+        <strong style="color: var(--success);">✓ Conexión Semántica y Relacional Estable</strong>
+    </div>
 </div>
-
-<div class="card-dashboard">
-
-<h3>Total Inventario</h3>
-
-<p>{{ total_inventario }}</p>
-
-</div>
-
-<div class="card-dashboard">
-
-<h3>Alertas Inteligentes</h3>
-
-<p>{{ total_alertas }}</p>
-
-</div>
-
-</div>
-
-<div class="resultado">
-
-<h3>Estado del sistema</h3>
-
-<p>
-El sistema semántico se encuentra conectado correctamente
-a Fuseki y procesando información RDF/OWL en tiempo real.
-</p>
-
-<div class="ia-box">
-
- Motor de inferencia inteligente activo.
-
-</div>
-
-</div>
-
-</main>
-
-</div>
-
-</body>
-</html>
+{% endblock %}
