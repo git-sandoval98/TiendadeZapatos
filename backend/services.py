@@ -1,23 +1,29 @@
 from SPARQLWrapper import SPARQLWrapper, JSON
 import urllib.error
 import socket
+import os
+import json
+import rdflib
 from config import FUSEKI_URL, PREFIX
+
+# Determinar rutas absolutas del proyecto
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+ONTOLOGIA_PATH = os.path.join(BASE_DIR, "data", "ontologia.ttl")
 
 def ejecutar_query(query, timeout=2.0):
     try:
         sparql = SPARQLWrapper(FUSEKI_URL)
         sparql.setQuery(PREFIX + query)
         sparql.setReturnFormat(JSON)
-        # Timeout para evitar bloqueos si Fuseki esta apagado
+        # Timeout corto para no congelar la app si Fuseki esta apagado
         socket.setdefaulttimeout(timeout)
         resultados = sparql.query().convert()
         return resultados
-    except (urllib.error.URLError, socket.timeout, ConnectionError):
-        print("Modo Offline Activado: No se pudo conectar a Fuseki.")
-        return obtener_datos_simulados(query)
+    except Exception as e:
+        print(f"Modo Offline RDFLib Activado: Consultando ontologia.ttl localmente... (Detalle: {e})")
+        return ejecutar_query_local_rdflib(query)
 
 def ejecutar_update(query):
-    # Nota: Requiere que Fuseki este activo para inserciones
     from config import FUSEKI_UPDATE_URL
     try:
         sparql = SPARQLWrapper(FUSEKI_UPDATE_URL)
@@ -26,8 +32,53 @@ def ejecutar_update(query):
         sparql.query()
         return True
     except Exception as e:
-        print(f"Error insertando en Fuseki: {e}")
+        print(f"Fuseki offline para inserciones. Usando RDFLib localmente... (Detalle: {e})")
+        return ejecutar_update_local_rdflib(query)
+
+# --- Motor Ontologico Local (RDFLib) ---
+
+def ejecutar_query_local_rdflib(query):
+    try:
+        if not os.path.exists(ONTOLOGIA_PATH):
+            print(f"Error: No se encontro el archivo de ontologia en {ONTOLOGIA_PATH}")
+            return obtener_datos_simulados(query)
+            
+        g = rdflib.Graph()
+        g.parse(ONTOLOGIA_PATH, format="turtle")
+        
+        # Combinar el prefijo global con la consulta
+        q_full = PREFIX + query
+        qres = g.query(q_full)
+        
+        # Serializar al formato estandar SPARQL JSON
+        res_bytes = qres.serialize(format="json")
+        return json.loads(res_bytes.decode("utf-8"))
+    except Exception as e:
+        print(f"Error procesando SPARQL localmente con RDFLib: {e}. Activando fallback estatico.")
+        return obtener_datos_simulados(query)
+
+def ejecutar_update_local_rdflib(query):
+    try:
+        if not os.path.exists(ONTOLOGIA_PATH):
+            print(f"Error: No se encontro el archivo de ontologia para actualizar en {ONTOLOGIA_PATH}")
+            return False
+            
+        g = rdflib.Graph()
+        g.parse(ONTOLOGIA_PATH, format="turtle")
+        
+        # Combinar el prefijo global con el update
+        u_full = PREFIX + query
+        g.update(u_full)
+        
+        # Guardar los cambios de vuelta en el archivo .ttl
+        g.serialize(destination=ONTOLOGIA_PATH, format="turtle")
+        print(f"¡Base Ontologica .ttl actualizada exitosamente en: {ONTOLOGIA_PATH}!")
+        return True
+    except Exception as e:
+        print(f"Error ejecutando UPDATE SPARQL con RDFLib: {e}")
         return False
+
+# --- Fallback Estatico Terciario (Seguridad Absoluta) ---
 
 def obtener_datos_simulados(query):
     q_lower = query.lower()
@@ -39,7 +90,6 @@ def obtener_datos_simulados(query):
     if "sum(?cantidad)" in q_lower:
         return {"results": {"bindings": [{"total_inventario": {"value": "450"}}]}}
     
-    # Inventario
     if "?zapato_nombre" in q_lower and "?inventario" in q_lower:
         return {"results": {"bindings": [
             {"inventario": {"value": "Inv_001"}, "zapato_nombre": {"value": "Air Max 270"}, "categoria_nombre": {"value": "Deportivo"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "42"}, "cantidad": {"value": "15"}},
@@ -64,7 +114,6 @@ def obtener_datos_simulados(query):
             {"inventario": {"value": "Inv_020"}, "zapato_nombre": {"value": "Mocasin Elegante"}, "categoria_nombre": {"value": "Formal"}, "genero_nombre": {"value": "Hombre"}, "talla": {"value": "42"}, "cantidad": {"value": "7"}}
         ]}}
         
-    # Ventas
     if "?venta" in q_lower and "?metodo_nombre" in q_lower:
         return {"results": {"bindings": [
             {"venta": {"value": "Venta_001"}, "temporada_nombre": {"value": "Verano"}, "metodo_nombre": {"value": "Tarjeta de Crédito"}},
@@ -74,7 +123,6 @@ def obtener_datos_simulados(query):
             {"venta": {"value": "Venta_005"}, "temporada_nombre": {"value": "Otoño"}, "metodo_nombre": {"value": "Tarjeta de Débito"}}
         ]}}
         
-    # Tendencias
     if "?temporada_nombre) as ?ventas" in q_lower or "?temporada_nombre) as ?ventas" in q_lower.replace(" ", ""):
         return {"results": {"bindings": [
             {"temporada_nombre": {"value": "Verano"}, "ventas": {"value": "65"}},
@@ -84,7 +132,6 @@ def obtener_datos_simulados(query):
         ]}}
         
     return {"results": {"bindings": []}}
-
 
 # --- Funciones de Negocio ---
 
@@ -223,9 +270,8 @@ def obtener_resumen_negocio():
     
     return resumen
 
-# --- CRUD Fuseki ---
+# --- CRUD RDF ---
 def agregar_producto_fuseki(nombre, precio, talla, cantidad, marca_id, categoria_id, genero_id):
-    # Generar IDs unicos
     import time
     timestamp = int(time.time())
     zap_id = f"Zap_{timestamp}"
@@ -249,7 +295,6 @@ def agregar_producto_fuseki(nombre, precio, talla, cantidad, marca_id, categoria
     return ejecutar_update(query)
 
 def eliminar_producto_fuseki(inv_id):
-    # Elimina el inventario (simplificado)
     query = f"""
     DELETE WHERE {{
       :{inv_id} ?p ?o .
