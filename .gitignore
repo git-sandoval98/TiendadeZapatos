@@ -5,8 +5,11 @@ venv/
 __pycache__/
 *.pyc
 
+.env
+tienda.db
 # IDEs and editors
 .vscode/
+*.log
 .idea/
 *.swp
 *.swo
