@@ -34,9 +34,7 @@ Instrucciones de comportamiento para ti:
             OPENROUTER_URL,
             headers={
                 "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-                "Content-Type": "application/json",
-                "HTTP-Referer": "http://localhost:5000",
-                "X-Title": "ZapatosStore"
+                "Content-Type": "application/json"
             },
             json={
                 "model": OPENROUTER_MODEL,
@@ -54,6 +52,9 @@ Instrucciones de comportamiento para ti:
                 "respuesta": data["choices"][0]["message"]["content"]
             }
         else:
+            # Logs detallados para depuración
+            print(f"[IA ERROR {response.status_code}]", flush=True)
+            print(f"[BODY]: {response.text}", flush=True)
             return {
                 "success": False,
                 "respuesta": f"Error del servicio de IA (codigo {response.status_code}). Intenta de nuevo en unos momentos."
