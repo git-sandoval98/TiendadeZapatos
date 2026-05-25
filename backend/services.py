@@ -10,13 +10,13 @@ from config import FUSEKI_URL, PREFIX
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ONTOLOGIA_PATH = os.path.join(BASE_DIR, "data", "ontologia.ttl")
 
-def ejecutar_query(query, timeout=2.0):
+def ejecutar_query(query, timeout=15.0):
     try:
         sparql = SPARQLWrapper(FUSEKI_URL)
         sparql.setQuery(PREFIX + query)
         sparql.setReturnFormat(JSON)
         # Timeout corto para no congelar la app si Fuseki esta apagado
-        socket.setdefaulttimeout(timeout)
+        socket.setdefaulttimeout(15)
         resultados = sparql.query().convert()
         return resultados
     except Exception as e:
